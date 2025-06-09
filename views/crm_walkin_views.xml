@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Walk-in Form View -->
+    <record id="view_crm_lead_walkin_form" model="ir.ui.view">
+        <field name="name">crm.lead.walkin.form</field>
+        <field name="model">crm.lead.walkin</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_completed" string="Mark as Completed" type="object" 
+                            invisible="state != 'scheduled'" class="oe_highlight"/>
+                    <button name="action_reschedule" string="Reschedule" type="object" 
+                            invisible="state not in ('scheduled', 'no_show')"/>
+                    <button name="action_no_show" string="No Show" type="object" 
+                            invisible="state != 'scheduled'"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            invisible="state != 'scheduled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,completed,rescheduled,cancelled,no_show"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_lead" type="object" class="oe_stat_button" icon="fa-star">
+                            <field name="lead_id" string="Lead" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="lead_id" readonly="state != 'scheduled'"/>
+                            <field name="user_id" options="{'no_create': True}" domain="[('share', '=', False)]"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="parent_walkin_id" readonly="1" invisible="not parent_walkin_id"/>
+                        </group>
+                        <group>
+                            <field name="scheduled_date" readonly="state != 'scheduled'"/>
+                            <field name="actual_date" invisible="not actual_date" readonly="1"/>
+                            <field name="reschedule_reason" invisible="state != 'rescheduled'" readonly="1"/>
+                            <field name="color" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add notes about this walk-in appointment..."/>
+                        </page>
+                        <page string="Reschedule Info" invisible="state != 'rescheduled'">
+                            <group>
+                                <field name="reschedule_note" readonly="1" invisible="not reschedule_note"/>
+                            </group>
+                            <field name="child_walkin_ids" readonly="1" invisible="not child_walkin_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="scheduled_date"/>
+                                    <field name="state"/>
+                                    <field name="user_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Walk-in Tree View -->
+    <record id="view_crm_lead_walkin_tree" model="ir.ui.view">
+        <field name="name">crm.lead.walkin.tree</field>
+        <field name="model">crm.lead.walkin</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'scheduled'" decoration-success="state == 'completed'" 
+                  decoration-warning="state == 'rescheduled'" decoration-danger="state in ['cancelled', 'no_show']"
+                  default_order="scheduled_date desc">
+                <field name="name"/>
+                <field name="lead_id"/>
+                <field name="partner_id"/>
+                <field name="scheduled_date"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="state"/>
+                <field name="reschedule_reason" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Walk-in Calendar View -->
+    <record id="view_crm_lead_walkin_calendar" model="ir.ui.view">
+        <field name="name">crm.lead.walkin.calendar</field>
+        <field name="model">crm.lead.walkin</field>
+        <field name="arch" type="xml">
+            <calendar string="Walk-ins" date_start="scheduled_date" color="user_id" mode="month">
+                <field name="name"/>
+                <field name="lead_id"/>
+                <field name="partner_id"/>
+                <field name="user_id" filters="1" avatar_field="avatar_128"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Walk-in Search View -->
+    <record id="view_crm_lead_walkin_search" model="ir.ui.view">
+        <field name="name">crm.lead.walkin.search</field>
+        <field name="model">crm.lead.walkin</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="lead_id"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <separator/>
+                <filter string="Scheduled" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Completed" name="completed" domain="[('state', '=', 'completed')]"/>
+                <filter string="Rescheduled" name="rescheduled" domain="[('state', '=', 'rescheduled')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <filter string="No Show" name="no_show" domain="[('state', '=', 'no_show')]"/>
+                <separator/>
+                <filter string="My Walk-ins" name="my_walkins" domain="[('user_id', '=', uid)]"/>
+                <filter string="Today" name="today" domain="[('scheduled_date', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')), ('scheduled_date', '&lt;=', context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
+                <filter string="Tomorrow" name="tomorrow" domain="[('scheduled_date', '&gt;=', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 00:00:00')), ('scheduled_date', '&lt;=', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 23:59:59'))]"/>
+                <filter string="Upcoming" name="upcoming" domain="[('scheduled_date', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')), ('state', '=', 'scheduled')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter string="Lead" name="group_by_lead" domain="[]" context="{'group_by': 'lead_id'}"/>
+                    <filter string="Responsible" name="group_by_user" domain="[]" context="{'group_by': 'user_id'}"/>
+                    <filter string="Date" name="group_by_date" domain="[]" context="{'group_by': 'scheduled_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Walk-in Action Window -->
+    <record id="action_crm_lead_walkin" model="ir.actions.act_window">
+        <field name="name">Walk-ins</field>
+        <field name="res_model">crm.lead.walkin</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="context">{'search_default_scheduled': 1, 'search_default_my_walkins': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Schedule your first walk-in appointment!
+            </p>
+        </field>
+    </record>
+
+    <!-- Walk-in Menu Item -->
+    <menuitem id="menu_crm_lead_walkin"
+              name="Walk-ins"
+              parent="crm.crm_menu_root"
+              action="action_crm_lead_walkin"
+              sequence="10"/>
+
+    <!-- Reschedule Wizard Form View -->
+    <record id="view_crm_lead_walkin_reschedule_wizard_form" model="ir.ui.view">
+        <field name="name">crm.lead.walkin.reschedule.wizard.form</field>
+        <field name="model">crm.lead.walkin.reschedule.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reschedule Walk-in">
+                <group>
+                    <field name="walkin_id" invisible="1"/>
+                    <field name="lead_id" invisible="1"/>
+                    <field name="new_date" required="1"/>
+                    <field name="reschedule_reason" required="1"/>
+                    <field name="notes" placeholder="Add notes about rescheduling..."/>
+                </group>
+                <footer>
+                    <button string="Reschedule" name="action_reschedule" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

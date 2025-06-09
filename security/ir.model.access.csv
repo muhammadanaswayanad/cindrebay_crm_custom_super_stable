@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_lead_queue_line,access_crm_lead_queue_line,model_crm_lead_queueing_line,base.group_user,1,1,1,1
+access_crm_lead_change_revenue_wizard_user,crm.lead.change.revenue.wizard.user,model_crm_lead_change_revenue_wizard,sales_team.group_sale_salesman,1,1,1,0
+access_crm_lead_change_revenue_wizard_manager,crm.lead.change.revenue.wizard.manager,model_crm_lead_change_revenue_wizard,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_collection_user,crm.lead.collection.user,model_crm_lead_collection,sales_team.group_sale_salesman,1,0,0,0
+access_crm_lead_collection_manager,crm.lead.collection.manager,model_crm_lead_collection,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_call_history_user,crm.lead.call.history.user,model_crm_lead_call_history,sales_team.group_sale_salesman,1,1,1,0
+access_crm_lead_call_history_manager,crm.lead.call.history.manager,model_crm_lead_call_history,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_walkin_user,crm.lead.walkin.user,model_crm_lead_walkin,sales_team.group_sale_salesman,1,1,1,0
+access_crm_lead_walkin_manager,crm.lead.walkin.manager,model_crm_lead_walkin,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_walkin_wizard_user,crm.lead.walkin.wizard.user,model_crm_lead_walkin_wizard,sales_team.group_sale_salesman,1,1,1,0
+access_crm_lead_walkin_wizard_manager,crm.lead.walkin.wizard.manager,model_crm_lead_walkin_wizard,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_walkin_reschedule_wizard_user,crm.lead.walkin.reschedule.wizard.user,model_crm_lead_walkin_reschedule_wizard,sales_team.group_sale_salesman,1,1,1,0
+access_crm_lead_walkin_reschedule_wizard_manager,crm.lead.walkin.reschedule.wizard.manager,model_crm_lead_walkin_reschedule_wizard,sales_team.group_sale_manager,1,1,1,1
+access_crm_lead_collection_enter_amount,crm.lead.collection.enter.amount,model_crm_lead_collection_enter_amount,sales_team.group_sale_salesman,1,1,1,1

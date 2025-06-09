@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Override Personal Leads rule -->
+    <function name="write" model="ir.model.data">
+        <function name="search" model="ir.model.data">
+            <value eval="[('module', '=', 'crm'), ('name', '=', 'crm_rule_personal_lead')]"/>
+        </function>
+        <value eval="{'noupdate': False}"/>
+    </function>
+
+    <record id="crm.crm_rule_personal_lead" model="ir.rule">
+        <field name="name">Personal Leads</field>
+        <field ref="crm.model_crm_lead" name="model_id"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+    </record>
+
+    <!-- Lead Collection Rules -->
+    <record id="lead_collection_user_rule" model="ir.rule">
+        <field name="name">Lead Collection User</field>
+        <field name="model_id" ref="model_crm_lead_collection"/>
+        <field name="domain_force">[("lead_id.user_id", "=", user.id)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+    </record>
+
+    <record id="lead_collection_manager_rule" model="ir.rule">
+        <field name="name">Lead Collection Manager</field>
+        <field name="model_id" ref="model_crm_lead_collection"/>
+        <field name="domain_force">[(1, "=", 1)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_manager'))]"/>
+    </record>
+
+    <!-- Call History Rules -->
+    <record id="call_history_user_rule" model="ir.rule">
+        <field name="name">Personal Call History</field>
+        <field name="model_id" ref="model_crm_lead_call_history"/>
+        <field name="domain_force">[("user_id", "=", user.id)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        <field name="perm_read" eval="False"/>  <!-- Change to False to not restrict reading -->
+        <field name="perm_write" eval="True"/>  <!-- Only restrict writing -->
+        <field name="perm_create" eval="True"/> <!-- Only restrict creating -->
+        <field name="perm_unlink" eval="True"/> <!-- Only restrict deleting -->
+    </record>
+
+    <record id="call_history_manager_rule" model="ir.rule">
+        <field name="name">All Call History for Managers</field>
+        <field name="model_id" ref="model_crm_lead_call_history"/>
+        <field name="domain_force">[(1, "=", 1)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+    
+    <!-- Walk-in Rules -->
+    <record id="walkin_user_rule" model="ir.rule">
+        <field name="name">Personal Walk-ins</field>
+        <field name="model_id" ref="model_crm_lead_walkin"/>
+        <field name="domain_force">[("user_id", "=", user.id)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="walkin_manager_rule" model="ir.rule">
+        <field name="name">All Walk-ins for Managers</field>
+        <field name="model_id" ref="model_crm_lead_walkin"/>
+        <field name="domain_force">[(1, "=", 1)]</field>
+        <field name="groups" eval="[(4, ref('sales_team.group_sale_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>

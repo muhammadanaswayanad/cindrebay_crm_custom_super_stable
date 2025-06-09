@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="crm_lead_view_form_contact_fields" model="ir.ui.view">
+        <field name="name">crm.lead.view.form.contact.fields</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add the display name field -->
+            <xpath expr="//sheet" position="before">
+                <field name="display_name" invisible="1"/>
+            </xpath>
+            
+            <!-- Make partner_id more visible in lead form -->
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Customer</attribute>
+                <attribute name="placeholder">Customer Name</attribute>
+            </xpath>
+            
+            <!-- Make contact_name more visible -->
+            <xpath expr="//field[@name='contact_name']" position="attributes">
+                <attribute name="string">Contact Person</attribute>
+                <attribute name="placeholder">Contact Person's Name</attribute>
+            </xpath>
+            
+            <!-- Ensure mobile field is visible -->
+            <xpath expr="//field[@name='mobile']" position="attributes">
+                <attribute name="string">Mobile</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

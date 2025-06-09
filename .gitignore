@@ -1,0 +1,5 @@
+.vscode/settings.json
+__pycache__/__init__.cpython-312.pyc
+models/__pycache__/__init__.cpython-312.pyc
+models/__pycache__/crm.cpython-312.pyc
+models/__pycache__/res_partner.cpython-312.pyc

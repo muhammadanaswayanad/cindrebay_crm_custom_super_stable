@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <function model="crm.team" name="action_set_queue_line_ids_for_all_teams"/>
+    </data>
+</odoo>
