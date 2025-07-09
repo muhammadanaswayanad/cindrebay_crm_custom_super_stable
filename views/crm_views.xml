@@ -154,7 +154,7 @@
                 <page string="Call History">
                     <field name="call_history_ids" readonly="1" context="{'search_default_my_calls': 1}">
                         <tree>
-                            <field name="create_date"/>
+                            <field name="call_date"/>
                             <field name="call_status"/>
                             <field name="user_id"/>
                             <field name="remarks"/>
@@ -436,7 +436,7 @@
                             <field name="lead_id" readonly="1"/>
                             <field name="call_status" readonly="1"/>
                             <field name="user_id" readonly="1"/>
-                            <field name="create_date" readonly="1"/>
+                            <field name="call_date" readonly="1"/>
                         </group>
                         <group>
                             <field name="remarks" readonly="1"/>
@@ -453,7 +453,7 @@
         <field name="arch" type="xml">
             <tree string="Call History">
                 <field name="lead_id"/>
-                <field name="create_date"/>
+                <field name="call_date"/>
                 <field name="call_status"/>
                 <field name="user_id"/>
                 <field name="remarks"/>
@@ -469,11 +469,13 @@
             <search>
                 <field name="lead_id"/>
                 <field name="call_status"/>
+                <field name="call_date"/>
                 <field name="remarks"/>
                 <filter string="My Calls" name="my_calls" domain="[('user_id', '=', uid)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Lead" name="group_by_lead" context="{'group_by': 'lead_id'}"/>
                     <filter string="Status" name="group_by_status" context="{'group_by': 'call_status'}"/>
+                    <filter string="Call Date" name="group_by_date" context="{'group_by': 'call_date:day'}"/>
                 </group>
             </search>
         </field>

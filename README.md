@@ -88,6 +88,24 @@ When a lead is created or its preferred branch is updated:
 3. **Rescheduling**: Use the reschedule button to create linked follow-up appointments
 4. **Completion**: Mark appointments as completed and add notes about the interaction
 
+### Managing Call Logs
+
+1. **Call Status Tracking**: Track the progression of calls with leads
+   - Set call status to track the communication lifecycle (1st Call, Followup 1-10)
+   - Record detailed call remarks for each interaction
+   - View color-coded call status indicators on kanban cards
+
+2. **Call History**: Maintain a complete record of all call interactions
+   - All calls are timestamped and recorded with the responsible user
+   - Call history is displayed in a dedicated tab for each lead
+   - Filter and group calls by date, status, or responsible user
+
+3. **Call Logging Process**:
+   - Update the call status field to reflect the current interaction stage
+   - Add relevant remarks about the call
+   - Click "Log Call" to save the interaction to history
+   - Each call log updates the lead's "Last Updated" timestamp
+
 ## Technical Notes
 
 - **Duplicate Lead Detection**: The system detects duplicates by matching phone numbers or email addresses
@@ -96,6 +114,9 @@ When a lead is created or its preferred branch is updated:
   - Phone matching is checked first, then email if no phone match is found
 - **Branch Matching Logic**: Branch matching is case-insensitive and ignores trailing underscores and whitespace
   - Example: "kochi_", "Kochi", and "kochi" are all considered the same branch
+- **Call Logging System**: Uses a dedicated model for storing call history
+  - Call dates are stored with proper timezone consideration
+  - Logging a call automatically updates the lead's last updated timestamp
 - **Module Dependencies**: base, crm, sale, sale_crm, hr, mail
 - **Data Security**: Includes custom security groups and access rights for proper data management
 - **Mail Integration**: Leverages Odoo's mail system for activity scheduling and notifications

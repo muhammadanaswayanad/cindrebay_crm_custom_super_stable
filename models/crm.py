@@ -469,12 +469,19 @@ class CRMLead(models.Model):
         """Log the current call status and remarks to history"""
         self.ensure_one()
         if self.call_status and self.call_status != 'not_called':
+            # Create the call history record with the current server time
             self.env['crm.lead.call.history'].create({
                 'lead_id': self.id,
                 'call_status': self.call_status,
                 'remarks': self.call_remarks,
                 'user_id': self.env.user.id,
+                'call_date': fields.Datetime.now(),  # Explicitly set call_date to now
             })
+            
+            # Force update the lead's write_date by writing an empty dict
+            # This updates the "Last Updated" field on the lead
+            self.write({})
+            
             # Clear remarks field after logging
             self.call_remarks = False
             return {
@@ -560,7 +567,15 @@ class CrmLeadCallHistory(models.Model):
     ], string="Call Status", required=True)
     remarks = fields.Text(string="Remarks")
     user_id = fields.Many2one('res.users', string='User', default=lambda self: self.env.user.id)
-    create_date = fields.Datetime(string='Date', readonly=True)
+    create_date = fields.Datetime(string='System Date', readonly=True)
+    call_date = fields.Datetime(string='Call Date', default=lambda self: fields.Datetime.now(), required=True)
+    
+    @api.model
+    def create(self, vals):
+        # Ensure call_date is set to current time in create
+        if not vals.get('call_date'):
+            vals['call_date'] = fields.Datetime.now()
+        return super(CrmLeadCallHistory, self).create(vals)
 
 class CrmTeam(models.Model):
     _inherit = "crm.team"
