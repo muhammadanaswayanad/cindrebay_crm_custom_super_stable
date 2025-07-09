@@ -54,10 +54,11 @@
         <field name="name">crm.salesperson.performance.graph</field>
         <field name="model">crm.salesperson.performance</field>
         <field name="arch" type="xml">
-            <graph string="Salesperson Performance" sample="1">
+            <graph string="Salesperson Performance" sample="1" stacked="True">
                 <field name="user_id"/>
                 <field name="call_status"/>
                 <field name="engagement_date" interval="day"/>
+                <field name="engagement_count" type="measure"/>
             </graph>
         </field>
     </record>
@@ -71,6 +72,7 @@
                 <field name="user_id" type="row"/>
                 <field name="call_status" type="row"/>
                 <field name="engagement_date" interval="day" type="col"/>
+                <field name="engagement_count" type="measure"/>
             </pivot>
         </field>
     </record>
@@ -79,7 +81,7 @@
     <record id="action_crm_salesperson_performance" model="ir.actions.act_window">
         <field name="name">Salesperson Performance</field>
         <field name="res_model">crm.salesperson.performance</field>
-        <field name="view_mode">tree,graph,pivot</field>
+        <field name="view_mode">tree,kanban,graph,pivot</field>
         <field name="context">{'search_default_group_by_user': 1, 'search_default_last_week': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -93,19 +95,48 @@
         </field>
     </record>
 
-    <!-- Dashboard View -->
-    <record id="view_crm_salesperson_performance_dashboard" model="ir.ui.view">
-        <field name="name">crm.salesperson.performance.dashboard</field>
+    <!-- Kanban View (replacing dashboard which is not supported in this Odoo version) -->
+    <record id="view_crm_salesperson_performance_kanban" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.kanban</field>
         <field name="model">crm.salesperson.performance</field>
         <field name="arch" type="xml">
-            <dashboard sample="1">
-                <view type="graph" ref="view_crm_salesperson_performance_graph"/>
-                <group>
-                    <aggregate name="total_engagements" string="Total Engagements" field="user_id" group_operator="count"/>
-                    <aggregate name="total_salespeople" string="Salespeople" field="user_id" group_operator="count_distinct"/>
-                </group>
-                <view type="pivot" ref="view_crm_salesperson_performance_pivot"/>
-            </dashboard>
+            <kanban class="o_kanban_dashboard" sample="1" create="false">
+                <field name="user_id"/>
+                <field name="team_id"/>
+                <field name="lead_id"/>
+                <field name="call_status"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong><field name="user_id"/></strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="float-right">
+                                        <field name="engagement_date"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mt8">
+                                <div class="col-6">
+                                    <span>Lead: <field name="lead_id"/></span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="float-right">
+                                        <field name="call_status" widget="badge" 
+                                            decoration-info="call_status == 'call_1'"
+                                            decoration-success="call_status in ['followup_1', 'followup_2', 'followup_3']"
+                                            decoration-warning="call_status in ['followup_4', 'followup_5', 'followup_6']"
+                                            decoration-danger="call_status in ['followup_7', 'followup_8', 'followup_9', 'followup_10']"
+                                            decoration-muted="call_status == 'not_connected'"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
 

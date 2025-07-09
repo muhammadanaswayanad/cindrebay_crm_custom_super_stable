@@ -18,6 +18,9 @@ class CrmSalespersonPerformance(models.Model):
     _order = "user_id, engagement_date desc"
     _check_company_auto = True
 
+    # Aggregate count field for reports
+    engagement_count = fields.Integer(string='Engagement Count', readonly=True, default=1)
+
     user_id = fields.Many2one('res.users', string='Salesperson', readonly=True, index=True)
     team_id = fields.Many2one('crm.team', string='Sales Team', readonly=True, index=True)
     engagement_date = fields.Date(string='Engagement Date', readonly=True, index=True)
@@ -51,7 +54,8 @@ class CrmSalespersonPerformance(models.Model):
                         DATE(ch.call_date) as engagement_date,
                         ch.lead_id,
                         l.stage_id,
-                        ch.call_status
+                        ch.call_status,
+                        1 as engagement_count
                     FROM
                         crm_lead_call_history ch
                     JOIN
