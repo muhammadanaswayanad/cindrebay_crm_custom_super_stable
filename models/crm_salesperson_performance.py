@@ -98,17 +98,19 @@ class CrmSalespersonPerformance(models.Model):
             WITH engagement_data AS (
                 SELECT 
                     u.id as user_id,
-                    u.name as user_name,
+                    p.name as user_name,
                     ch.call_status,
                     COUNT(DISTINCT ch.lead_id) as lead_count
                 FROM 
                     crm_lead_call_history ch
                 JOIN 
                     res_users u ON ch.user_id = u.id
+                JOIN
+                    res_partner p ON u.partner_id = p.id
                 WHERE 
                     DATE(ch.call_date) BETWEEN %s AND %s
                 GROUP BY 
-                    u.id, u.name, ch.call_status
+                    u.id, p.name, ch.call_status
             )
             SELECT * FROM engagement_data
             ORDER BY user_name, call_status
