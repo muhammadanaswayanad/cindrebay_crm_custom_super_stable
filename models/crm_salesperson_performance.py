@@ -1,21 +1,28 @@
 from odoo import api, fields, models, tools, _
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from odoo.tools.misc import format_date
 import json
+
+# Constants
+ACTION_CLIENT = 'ir.actions.client'
+DISPLAY_NOTIFICATION = 'display_notification'
+RELOAD_ACTION = 'reload'
 
 
 class CrmSalespersonPerformance(models.Model):
     _name = "crm.salesperson.performance"
     _description = "Salesperson Performance Report"
     _auto = False
+    _rec_name = 'user_id'
     _order = "user_id, engagement_date desc"
-    _transient = True  # Making it transient for the summary view
+    _check_company_auto = True
 
-    user_id = fields.Many2one('res.users', string='Salesperson', readonly=True)
-    team_id = fields.Many2one('crm.team', string='Sales Team', readonly=True)
-    engagement_date = fields.Date(string='Engagement Date', readonly=True)
-    lead_id = fields.Many2one('crm.lead', string='Lead', readonly=True)
-    stage_id = fields.Many2one('crm.stage', string='Stage', readonly=True)
+    user_id = fields.Many2one('res.users', string='Salesperson', readonly=True, index=True)
+    team_id = fields.Many2one('crm.team', string='Sales Team', readonly=True, index=True)
+    engagement_date = fields.Date(string='Engagement Date', readonly=True, index=True)
+    lead_id = fields.Many2one('crm.lead', string='Lead', readonly=True, index=True)
+    stage_id = fields.Many2one('crm.stage', string='Stage', readonly=True, index=True)
     call_status = fields.Selection([
         ('not_called', 'Not Called'),
         ('not_connected', 'Call not connected'),
@@ -32,38 +39,35 @@ class CrmSalespersonPerformance(models.Model):
         ('followup_10', 'Followup 10'),
     ], string="Call Status", readonly=True)
     
-    # Fields for summary form view
-    date_from = fields.Date(string="From Date")
-    date_to = fields.Date(string="To Date", default=fields.Date.today)
-    summary_loaded = fields.Boolean(string="Summary Loaded", default=False)
-    summary_html = fields.Html(string="Summary", sanitize=False)
-    
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
-                SELECT
-                    ROW_NUMBER() OVER() as id,
-                    ch.user_id,
-                    l.team_id,
-                    DATE(ch.call_date) as engagement_date,
-                    ch.lead_id,
-                    l.stage_id,
-                    ch.call_status
-                FROM
-                    crm_lead_call_history ch
-                JOIN
-                    crm_lead l ON ch.lead_id = l.id
-                WHERE
-                    ch.call_date IS NOT NULL
-                GROUP BY
-                    ch.user_id, l.team_id, DATE(ch.call_date), ch.lead_id, l.stage_id, ch.call_status
+                WITH numbered_rows AS (
+                    SELECT
+                        ROW_NUMBER() OVER() as id,
+                        ch.user_id,
+                        l.team_id,
+                        DATE(ch.call_date) as engagement_date,
+                        ch.lead_id,
+                        l.stage_id,
+                        ch.call_status
+                    FROM
+                        crm_lead_call_history ch
+                    JOIN
+                        crm_lead l ON ch.lead_id = l.id
+                    WHERE
+                        ch.call_date IS NOT NULL
+                    GROUP BY
+                        ch.user_id, l.team_id, DATE(ch.call_date), ch.lead_id, l.stage_id, ch.call_status
+                )
+                SELECT * FROM numbered_rows
             )
         """ % (self._table))
 
     def action_view_leads(self):
         self.ensure_one()
-        action = self.env["ir.actions.actions"]._for_xml_id("crm.crm_lead_action_pipeline")
+        action = self.env.ref('crm.crm_lead_action_pipeline').sudo().read()[0]
         action['domain'] = [('id', '=', self.lead_id.id)]
         action['context'] = {}
         return action
@@ -85,22 +89,25 @@ class CrmSalespersonPerformance(models.Model):
         if isinstance(end_date, datetime):
             end_date = end_date.date()
             
+        # Use a CTE for better performance in Odoo 17
         query = """
-            SELECT 
-                u.id as user_id,
-                u.name as user_name,
-                ch.call_status,
-                COUNT(DISTINCT ch.lead_id) as lead_count
-            FROM 
-                crm_lead_call_history ch
-            JOIN 
-                res_users u ON ch.user_id = u.id
-            WHERE 
-                DATE(ch.call_date) BETWEEN %s AND %s
-            GROUP BY 
-                u.id, u.name, ch.call_status
-            ORDER BY 
-                u.name, ch.call_status
+            WITH engagement_data AS (
+                SELECT 
+                    u.id as user_id,
+                    u.name as user_name,
+                    ch.call_status,
+                    COUNT(DISTINCT ch.lead_id) as lead_count
+                FROM 
+                    crm_lead_call_history ch
+                JOIN 
+                    res_users u ON ch.user_id = u.id
+                WHERE 
+                    DATE(ch.call_date) BETWEEN %s AND %s
+                GROUP BY 
+                    u.id, u.name, ch.call_status
+            )
+            SELECT * FROM engagement_data
+            ORDER BY user_name, call_status
         """
         
         self.env.cr.execute(query, (start_date, end_date))
@@ -118,7 +125,8 @@ class CrmSalespersonPerformance(models.Model):
                     'statuses': {}
                 }
             
-            summary[user_id]['statuses'][row['call_status']] = row['lead_count']
+            call_status = row['call_status'] or 'undefined'
+            summary[user_id]['statuses'][call_status] = row['lead_count']
             summary[user_id]['total_leads'] += row['lead_count']
             
         return {
@@ -127,6 +135,19 @@ class CrmSalespersonPerformance(models.Model):
             'data': list(summary.values())
         }
         
+    # Action methods specific to the SQL report model
+
+
+class CrmSalespersonSummary(models.TransientModel):
+    _name = "crm.salesperson.summary"
+    _description = "Salesperson Performance Summary"
+    _rec_name = 'date_from'
+
+    date_from = fields.Date(string="From Date", required=True)
+    date_to = fields.Date(string="To Date", required=True, default=fields.Date.today)
+    summary_loaded = fields.Boolean(string="Summary Loaded", default=False)
+    summary_html = fields.Html(string="Summary", sanitize=False)
+    
     def action_load_summary(self):
         """
         Load engagement summary data for the specified date range
@@ -136,8 +157,8 @@ class CrmSalespersonPerformance(models.Model):
         
         if not self.date_from or not self.date_to:
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
+                'type': ACTION_CLIENT,
+                'tag': DISPLAY_NOTIFICATION,
                 'params': {
                     'title': _('Missing Date Range'),
                     'message': _('Please select a date range.'),
@@ -146,8 +167,8 @@ class CrmSalespersonPerformance(models.Model):
                 }
             }
             
-        # Get summary data
-        summary = self.get_engagement_summary(self.date_from, self.date_to)
+        # Get summary data using the report model
+        summary = self.env['crm.salesperson.performance'].get_engagement_summary(self.date_from, self.date_to)
         
         # Build HTML report
         html = """
@@ -215,6 +236,6 @@ class CrmSalespersonPerformance(models.Model):
         })
         
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            'type': ACTION_CLIENT,
+            'tag': RELOAD_ACTION,
         }

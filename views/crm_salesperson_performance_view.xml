@@ -33,8 +33,8 @@
                 <field name="stage_id"/>
                 <field name="call_status"/>
                 <separator/>
-                <filter string="Last 7 Days" name="last_week" domain="[('engagement_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
-                <filter string="Last 30 Days" name="last_month" domain="[('engagement_date', '>=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 7 Days" name="last_week" domain="[('engagement_date', '>=', (context_today() - relativedelta(days=7)))]"/>
+                <filter string="Last 30 Days" name="last_month" domain="[('engagement_date', '>=', (context_today() - relativedelta(days=30)))]"/>
                 <filter string="Not Connected" name="not_connected" domain="[('call_status', '=', 'not_connected')]"/>
                 <filter string="1st Calls" name="first_call" domain="[('call_status', '=', 'call_1')]"/>
                 <filter string="Follow-ups" name="followups" domain="[('call_status', 'ilike', 'followup_')]"/>
@@ -118,15 +118,14 @@
               sequence="20"/>
 
     <!-- Custom Summary View -->
-    <record id="view_crm_salesperson_performance_summary_form" model="ir.ui.view">
-        <field name="name">crm.salesperson.performance.summary.form</field>
-        <field name="model">crm.salesperson.performance</field>
+    <record id="view_crm_salesperson_summary_form" model="ir.ui.view">
+        <field name="name">crm.salesperson.summary.form</field>
+        <field name="model">crm.salesperson.summary</field>
         <field name="arch" type="xml">
             <form string="Salesperson Engagement Summary">
                 <sheet>
                     <group>
                         <group>
-                            <field name="user_id" invisible="1"/>
                             <label for="date_from" string="Period"/>
                             <div>
                                 <field name="date_from" widget="daterange" options="{'related_end_date': 'date_to'}" class="oe_inline"/>
@@ -148,15 +147,15 @@
     <!-- Action for Summary -->
     <record id="action_crm_salesperson_performance_summary" model="ir.actions.act_window">
         <field name="name">Engagement Summary</field>
-        <field name="res_model">crm.salesperson.performance</field>
+        <field name="res_model">crm.salesperson.summary</field>
         <field name="view_mode">form</field>
-        <field name="view_id" ref="view_crm_salesperson_performance_summary_form"/>
+        <field name="view_id" ref="view_crm_salesperson_summary_form"/>
         <field name="target">current</field>
         <field name="context">{'default_date_from': context_today().strftime('%Y-%m-%d'), 'default_date_to': context_today().strftime('%Y-%m-%d')}</field>
     </record>
 
     <!-- Menu Item for Summary -->
-    <menuitem id="menu_crm_salesperson_performance_summary"
+    <menuitem id="menu_crm_salesperson_summary"
               name="Engagement Summary"
               parent="crm.crm_menu_report"
               action="action_crm_salesperson_performance_summary"
