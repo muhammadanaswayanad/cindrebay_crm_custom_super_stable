@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_crm_salesperson_performance_tree" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.tree</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <tree string="Salesperson Performance">
+                <field name="user_id"/>
+                <field name="team_id"/>
+                <field name="engagement_date"/>
+                <field name="lead_id" widget="many2one_button" options="{'reload_on_button': true}"/>
+                <field name="stage_id"/>
+                <field name="call_status" widget="badge" 
+                       decoration-info="call_status == 'call_1'"
+                       decoration-success="call_status in ['followup_1', 'followup_2', 'followup_3']"
+                       decoration-warning="call_status in ['followup_4', 'followup_5', 'followup_6']"
+                       decoration-danger="call_status in ['followup_7', 'followup_8', 'followup_9', 'followup_10']"
+                       decoration-muted="call_status == 'not_connected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_crm_salesperson_performance_search" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.search</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id"/>
+                <field name="team_id"/>
+                <field name="lead_id"/>
+                <field name="stage_id"/>
+                <field name="call_status"/>
+                <separator/>
+                <filter string="Last 7 Days" name="last_week" domain="[('engagement_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 30 Days" name="last_month" domain="[('engagement_date', '>=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Not Connected" name="not_connected" domain="[('call_status', '=', 'not_connected')]"/>
+                <filter string="1st Calls" name="first_call" domain="[('call_status', '=', 'call_1')]"/>
+                <filter string="Follow-ups" name="followups" domain="[('call_status', 'ilike', 'followup_')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Salesperson" name="group_by_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Sales Team" name="group_by_team" context="{'group_by': 'team_id'}"/>
+                    <filter string="Stage" name="group_by_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Call Status" name="group_by_call_status" context="{'group_by': 'call_status'}"/>
+                    <filter string="Engagement Date" name="group_by_engagement_date" context="{'group_by': 'engagement_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Graph View -->
+    <record id="view_crm_salesperson_performance_graph" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.graph</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <graph string="Salesperson Performance" sample="1">
+                <field name="user_id"/>
+                <field name="call_status"/>
+                <field name="engagement_date" interval="day"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_crm_salesperson_performance_pivot" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.pivot</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <pivot string="Salesperson Performance" sample="1">
+                <field name="user_id" type="row"/>
+                <field name="call_status" type="row"/>
+                <field name="engagement_date" interval="day" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_crm_salesperson_performance" model="ir.actions.act_window">
+        <field name="name">Salesperson Performance</field>
+        <field name="res_model">crm.salesperson.performance</field>
+        <field name="view_mode">tree,graph,pivot</field>
+        <field name="context">{'search_default_group_by_user': 1, 'search_default_last_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No salesperson activity recorded yet
+            </p>
+            <p>
+                This report shows the engagement of salespeople with leads/opportunities
+                based on their call log history. It helps track how active each salesperson
+                is in following up with leads.
+            </p>
+        </field>
+    </record>
+
+    <!-- Dashboard View -->
+    <record id="view_crm_salesperson_performance_dashboard" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.dashboard</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <dashboard sample="1">
+                <view type="graph" ref="view_crm_salesperson_performance_graph"/>
+                <group>
+                    <aggregate name="total_engagements" string="Total Engagements" field="user_id" group_operator="count"/>
+                    <aggregate name="total_salespeople" string="Salespeople" field="user_id" group_operator="count_distinct"/>
+                </group>
+                <view type="pivot" ref="view_crm_salesperson_performance_pivot"/>
+            </dashboard>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_crm_salesperson_performance"
+              name="Salesperson Performance"
+              parent="crm.crm_menu_report"
+              action="action_crm_salesperson_performance"
+              groups="sales_team.group_sale_manager"
+              sequence="20"/>
+
+    <!-- Custom Summary View -->
+    <record id="view_crm_salesperson_performance_summary_form" model="ir.ui.view">
+        <field name="name">crm.salesperson.performance.summary.form</field>
+        <field name="model">crm.salesperson.performance</field>
+        <field name="arch" type="xml">
+            <form string="Salesperson Engagement Summary">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="user_id" invisible="1"/>
+                            <label for="date_from" string="Period"/>
+                            <div>
+                                <field name="date_from" widget="daterange" options="{'related_end_date': 'date_to'}" class="oe_inline"/>
+                                <field name="date_to" widget="daterange" options="{'related_start_date': 'date_from'}" class="oe_inline"/>
+                            </div>
+                        </group>
+                    </group>
+                    <button name="action_load_summary" string="Load Summary" type="object" class="btn-primary"/>
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('summary_loaded', '=', True)]}">
+                        Select a date range and click "Load Summary" to see performance data.
+                    </div>
+                    <field name="summary_loaded" invisible="1"/>
+                    <field name="summary_html" attrs="{'invisible': [('summary_loaded', '=', False)]}" widget="html" nolabel="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Summary -->
+    <record id="action_crm_salesperson_performance_summary" model="ir.actions.act_window">
+        <field name="name">Engagement Summary</field>
+        <field name="res_model">crm.salesperson.performance</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_crm_salesperson_performance_summary_form"/>
+        <field name="target">current</field>
+        <field name="context">{'default_date_from': context_today().strftime('%Y-%m-%d'), 'default_date_to': context_today().strftime('%Y-%m-%d')}</field>
+    </record>
+
+    <!-- Menu Item for Summary -->
+    <menuitem id="menu_crm_salesperson_performance_summary"
+              name="Engagement Summary"
+              parent="crm.crm_menu_report"
+              action="action_crm_salesperson_performance_summary"
+              groups="sales_team.group_sale_manager"
+              sequence="21"/>
+
+</odoo>

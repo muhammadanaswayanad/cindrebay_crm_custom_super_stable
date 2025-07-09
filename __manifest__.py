@@ -20,6 +20,7 @@
         'views/res_partner.xml',
         'views/crm_views.xml',
         'views/crm_walkin_views.xml',  # New walkin views
+        'views/crm_salesperson_performance_view.xml',  # Salesperson performance report
     ],
     'installable': True,
     'application': False,
