@@ -165,11 +165,11 @@
                         </group>
                     </group>
                     <button name="action_load_summary" string="Load Summary" type="object" class="btn-primary"/>
-                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('summary_loaded', '=', True)]}">
+                    <field name="summary_loaded" invisible="1"/>
+                    <div class="alert alert-info" role="alert" invisible="summary_loaded">
                         Select a date range and click "Load Summary" to see performance data.
                     </div>
-                    <field name="summary_loaded" invisible="1"/>
-                    <field name="summary_html" attrs="{'invisible': [('summary_loaded', '=', False)]}" widget="html" nolabel="1"/>
+                    <field name="summary_html" invisible="not summary_loaded" widget="html" nolabel="1"/>
                 </sheet>
             </form>
         </field>
