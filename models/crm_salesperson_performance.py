@@ -20,6 +20,8 @@ class CrmSalespersonPerformance(models.Model):
 
     # Aggregate count field for reports
     engagement_count = fields.Integer(string='Engagement Count', readonly=True, default=1)
+    history_id = fields.Integer(string='History ID', readonly=True)
+    full_date = fields.Datetime(string='Full Datetime', readonly=True)
 
     user_id = fields.Many2one('res.users', string='Salesperson', readonly=True, index=True)
     team_id = fields.Many2one('crm.team', string='Sales Team', readonly=True, index=True)
@@ -49,8 +51,10 @@ class CrmSalespersonPerformance(models.Model):
                 WITH numbered_rows AS (
                     SELECT
                         ROW_NUMBER() OVER() as id,
+                        ch.id as history_id,
                         ch.user_id,
                         l.team_id,
+                        ch.call_date as full_date,
                         DATE(ch.call_date) as engagement_date,
                         ch.lead_id,
                         l.stage_id,
@@ -62,10 +66,9 @@ class CrmSalespersonPerformance(models.Model):
                         crm_lead l ON ch.lead_id = l.id
                     WHERE
                         ch.call_date IS NOT NULL
-                    GROUP BY
-                        ch.user_id, l.team_id, DATE(ch.call_date), ch.lead_id, l.stage_id, ch.call_status
                 )
                 SELECT * FROM numbered_rows
+                ORDER BY full_date DESC
             )
         """ % (self._table))
 
@@ -100,6 +103,7 @@ class CrmSalespersonPerformance(models.Model):
                     u.id as user_id,
                     p.name as user_name,
                     ch.call_status,
+                    ch.call_date,
                     COUNT(DISTINCT ch.lead_id) as lead_count
                 FROM 
                     crm_lead_call_history ch
@@ -108,12 +112,21 @@ class CrmSalespersonPerformance(models.Model):
                 JOIN
                     res_partner p ON u.partner_id = p.id
                 WHERE 
-                    DATE(ch.call_date) BETWEEN %s AND %s
+                    ch.call_date >= %s AND ch.call_date <= %s
                 GROUP BY 
-                    u.id, p.name, ch.call_status
+                    u.id, p.name, ch.call_status, ch.call_date
             )
-            SELECT * FROM engagement_data
-            ORDER BY user_name, call_status
+            SELECT 
+                user_id,
+                user_name,
+                call_status,
+                SUM(lead_count) as lead_count
+            FROM 
+                engagement_data
+            GROUP BY 
+                user_id, user_name, call_status
+            ORDER BY 
+                user_name, call_status
         """
         
         self.env.cr.execute(query, (start_date, end_date))
