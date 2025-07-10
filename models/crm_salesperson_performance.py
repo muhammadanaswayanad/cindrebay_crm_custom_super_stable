@@ -155,6 +155,51 @@ class CrmSalespersonPerformance(models.Model):
         }
         
     # Action methods specific to the SQL report model
+    
+    @api.model
+    def fix_duplicate_timestamps(self):
+        """
+        One-time method to fix historical call records with duplicate timestamps.
+        This adds a small time offset to records that have the same timestamp for the same day.
+        """
+        self.env.cr.execute("""
+            SELECT ch.id, ch.call_date, ch.lead_id, ch.user_id, COUNT(*) OVER(PARTITION BY DATE(ch.call_date), ch.call_status, ch.lead_id, ch.user_id) as duplicate_count,
+                   ROW_NUMBER() OVER(PARTITION BY DATE(ch.call_date), ch.call_status, ch.lead_id, ch.user_id ORDER BY ch.id) as row_num
+            FROM crm_lead_call_history ch
+            WHERE ch.call_date IS NOT NULL
+            ORDER BY ch.lead_id, ch.user_id, ch.call_date
+        """)
+        
+        results = self.env.cr.dictfetchall()
+        
+        # Group records by lead_id, user_id, and call_date (date part only)
+        grouped_records = {}
+        for record in results:
+            if record['duplicate_count'] > 1:
+                key = (record['lead_id'], record['user_id'], record['call_date'].date())
+                if key not in grouped_records:
+                    grouped_records[key] = []
+                grouped_records[key].append(record)
+        
+        # Update records with time offsets
+        for key, records in grouped_records.items():
+            for i, record in enumerate(records):
+                if i > 0:  # Skip the first record in each group
+                    # Add i minutes to the timestamp
+                    call_history = self.env['crm.lead.call.history'].browse(record['id'])
+                    new_date = record['call_date'] + timedelta(minutes=i)
+                    call_history.write({'call_date': new_date})
+                    
+        return {
+            'type': ACTION_CLIENT,
+            'tag': DISPLAY_NOTIFICATION,
+            'params': {
+                'title': _('Historical Data Fixed'),
+                'message': _('Historical call records with duplicate timestamps have been updated with unique timestamps.'),
+                'sticky': False,
+                'type': 'success'
+            }
+        }
 
 
 class CrmSalespersonSummary(models.TransientModel):

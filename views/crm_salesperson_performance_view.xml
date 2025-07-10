@@ -194,5 +194,23 @@
               action="action_crm_salesperson_performance_summary"
               groups="sales_team.group_sale_manager"
               sequence="21"/>
+              
+    <!-- Action for fixing historical data -->
+    <record id="action_fix_duplicate_timestamps" model="ir.actions.server">
+        <field name="name">Fix Duplicate Timestamps</field>
+        <field name="model_id" ref="model_crm_salesperson_performance"/>
+        <field name="binding_model_id" ref="model_crm_salesperson_performance"/>
+        <field name="state">code</field>
+        <field name="code">action = model.fix_duplicate_timestamps()</field>
+        <field name="binding_view_types">list</field>
+    </record>
+    
+    <!-- Menu Item for fixing historical data -->
+    <menuitem id="menu_fix_duplicate_timestamps"
+              name="Fix Historical Call Timestamps"
+              parent="crm.crm_menu_report"
+              action="action_fix_duplicate_timestamps"
+              groups="sales_team.group_sale_manager"
+              sequence="22"/>
 
 </odoo>
