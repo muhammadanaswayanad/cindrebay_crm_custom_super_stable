@@ -569,6 +569,7 @@ class CrmLeadCallHistory(models.Model):
     user_id = fields.Many2one('res.users', string='User', default=lambda self: self.env.user.id)
     create_date = fields.Datetime(string='System Date', readonly=True)
     call_date = fields.Datetime(string='Call Date', default=lambda self: fields.Datetime.now(), required=True)
+    timestamp_fixed = fields.Boolean(string='Timestamp Fixed', default=False, help='Indicates if the timestamp has been adjusted to resolve duplicate timestamps')
     
     @api.model
     def create(self, vals):
@@ -576,6 +577,58 @@ class CrmLeadCallHistory(models.Model):
         if not vals.get('call_date'):
             vals['call_date'] = fields.Datetime.now()
         return super(CrmLeadCallHistory, self).create(vals)
+            
+    @api.model
+    def fix_duplicate_timestamps(self):
+        """
+        One-time method to fix historical call records with duplicate timestamps.
+        This adds a small time offset to records that have the same timestamp for the same day.
+        """
+        self.env.cr.execute("""
+            SELECT id, call_date, lead_id, user_id, 
+                   COUNT(*) OVER(PARTITION BY DATE(call_date), call_status, lead_id, user_id) as duplicate_count,
+                   ROW_NUMBER() OVER(PARTITION BY DATE(call_date), call_status, lead_id, user_id ORDER BY id) as row_num
+            FROM crm_lead_call_history
+            WHERE call_date IS NOT NULL
+            AND timestamp_fixed = FALSE
+            ORDER BY lead_id, user_id, call_date
+        """)
+        
+        results = self.env.cr.dictfetchall()
+        fixed_count = 0
+        
+        # Group records by lead_id, user_id, and call_date (date part only)
+        grouped_records = {}
+        for record in results:
+            if record['duplicate_count'] > 1:
+                key = (record['lead_id'], record['user_id'], record['call_date'].date())
+                if key not in grouped_records:
+                    grouped_records[key] = []
+                grouped_records[key].append(record)
+        
+        # Update records with time offsets
+        for key, records in grouped_records.items():
+            for i, record in enumerate(records):
+                if i > 0:  # Skip the first record in each group
+                    # Add i minutes to the timestamp
+                    call_history = self.browse(record['id'])
+                    new_date = record['call_date'] + timedelta(minutes=i)
+                    call_history.write({
+                        'call_date': new_date,
+                        'timestamp_fixed': True
+                    })
+                    fixed_count += 1
+                    
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Historical Data Fixed'),
+                'message': _('%s historical call records with duplicate timestamps have been updated with unique timestamps.') % fixed_count,
+                'sticky': False,
+                'type': 'success'
+            }
+        }
 
 class CrmTeam(models.Model):
     _inherit = "crm.team"

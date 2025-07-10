@@ -457,6 +457,7 @@
                 <field name="call_status"/>
                 <field name="user_id"/>
                 <field name="remarks"/>
+                <field name="timestamp_fixed" widget="boolean_toggle"/>
             </tree>
         </field>
     </record>
@@ -472,6 +473,8 @@
                 <field name="call_date"/>
                 <field name="remarks"/>
                 <filter string="My Calls" name="my_calls" domain="[('user_id', '=', uid)]"/>
+                <filter string="Fixed Timestamps" name="fixed_timestamps" domain="[('timestamp_fixed', '=', True)]"/>
+                <filter string="Duplicate Timestamps" name="duplicate_timestamps" domain="[('timestamp_fixed', '=', False)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Lead" name="group_by_lead" context="{'group_by': 'lead_id'}"/>
                     <filter string="Status" name="group_by_status" context="{'group_by': 'call_status'}"/>
