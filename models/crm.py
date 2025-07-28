@@ -414,13 +414,11 @@ class CRMLead(models.Model):
     def action_open_collection_form(self):
         collection = self.env['crm.lead.collection'].search([('lead_id', '=', self.id), ('state', '=', 'pending')], limit=1)
         if collection:
-            view_id = self.env.ref('tijus_crm_custom.view_crm_lead_collection_form').id
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Collect Payment',
                 'res_model': 'crm.lead.collection',
                 'view_mode': 'form',
-                'view_id': view_id,
                 'res_id': collection.id,
                 'target': 'new',
             }
@@ -686,13 +684,11 @@ class CrmLeadCollection(models.Model):
                 record.state = 'pending'
 
     def action_enter_collected_amount(self):
-        view_id = self.env.ref('tijus_crm_custom.view_enter_collected_amount_form').id
         return {
             'type': 'ir.actions.act_window',
             'name': 'Enter Collected Amount',
             'res_model': 'crm.lead.collection.enter.amount',
             'view_mode': 'form',
-            'view_id': view_id,
             'target': 'new',
             'context': {'default_collection_id': self.id},
         }
