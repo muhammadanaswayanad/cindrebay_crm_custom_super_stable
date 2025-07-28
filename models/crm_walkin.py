@@ -144,8 +144,12 @@ class CrmLeadWalkinWizard(models.TransientModel):
     _name = 'crm.lead.walkin.wizard'
     _description = 'Schedule Walk-in Wizard'
 
+    @api.model
+    def _default_walkin_date(self):
+        return fields.Datetime.now() + timedelta(days=1)
+
     lead_id = fields.Many2one('crm.lead', string='Lead', required=True)
-    walkin_date = fields.Datetime(string="Walk-in Date", required=True, default=lambda self: fields.Datetime.now() + timedelta(days=1))
+    walkin_date = fields.Datetime(string="Walk-in Date", required=True, default=_default_walkin_date)
     notes = fields.Text(string="Notes", help="Additional notes about the walk-in")
 
     def action_schedule_walkin(self):

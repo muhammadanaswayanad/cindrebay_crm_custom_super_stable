@@ -568,7 +568,7 @@ class CrmLeadCallHistory(models.Model):
     remarks = fields.Text(string="Remarks")
     user_id = fields.Many2one('res.users', string='User', default=lambda self: self.env.user.id)
     create_date = fields.Datetime(string='System Date', readonly=True)
-    call_date = fields.Datetime(string='Call Date', default=lambda self: fields.Datetime.now(), required=True)
+    call_date = fields.Datetime(string='Call Date', default=fields.Datetime.now, required=True)
     timestamp_fixed = fields.Boolean(string='Timestamp Fixed', default=False, help='Indicates if the timestamp has been adjusted to resolve duplicate timestamps')
     
     @api.model
